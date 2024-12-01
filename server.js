@@ -195,7 +195,22 @@ app.delete('/productos/:id', verificarRol(['administrador']), async (req, res) =
 // Rutas para contenido principal
 app.get('/contenido-principal', async (req, res) => {
     try {
-        const [rows] = await pool.execute('SELECT * FROM contenido_principal ORDER BY created_at DESC');
+        const [rows] = await pool.execute(`
+            SELECT 
+                id,
+                titulo,
+                descripcion,
+                tipo,
+                CASE 
+                    WHEN tipo = 'imagen' THEN CONCAT('data:image/jpeg;base64,', url)
+                    WHEN tipo = 'video' THEN CONCAT('data:video/mp4;base64,', url)
+                    ELSE url 
+                END as url,
+                created_at,
+                updated_at
+            FROM contenido_principal 
+            ORDER BY created_at DESC
+        `);
         res.json(rows);
     } catch (error) {
         console.error('Error al obtener contenido:', error);
@@ -220,14 +235,19 @@ app.post('/contenido-principal', async (req, res) => {
             });
         }
 
-        console.log('Tamaño de datos:', {
-            urlLength: url.length,
-            tipo: tipo
-        });
+        // Remover el prefijo data:image/jpeg;base64, o data:video/mp4;base64,
+        let cleanUrl = url;
+        if (tipo === 'imagen' && url.startsWith('data:image')) {
+            cleanUrl = url.split(',')[1];
+        } else if (tipo === 'video' && url.startsWith('data:video')) {
+            cleanUrl = url.split(',')[1];
+        }
+
+        console.log('Guardando contenido de tipo:', tipo);
 
         const [result] = await pool.execute(
             'INSERT INTO contenido_principal (titulo, descripcion, tipo, url) VALUES (?, ?, ?, ?)',
-            [titulo, descripcion, tipo, url]
+            [titulo, descripcion, tipo, cleanUrl]
         );
 
         console.log('Contenido guardado exitosamente, ID:', result.insertId);
@@ -247,9 +267,18 @@ app.post('/contenido-principal', async (req, res) => {
 app.put('/contenido-principal/:id', async (req, res) => {
     try {
         const { titulo, descripcion, tipo, url } = req.body;
+        
+        // Remover el prefijo data:image/jpeg;base64, o data:video/mp4;base64,
+        let cleanUrl = url;
+        if (tipo === 'imagen' && url.startsWith('data:image')) {
+            cleanUrl = url.split(',')[1];
+        } else if (tipo === 'video' && url.startsWith('data:video')) {
+            cleanUrl = url.split(',')[1];
+        }
+
         await pool.execute(
             'UPDATE contenido_principal SET titulo = ?, descripcion = ?, tipo = ?, url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-            [titulo, descripcion, tipo, url, req.params.id]
+            [titulo, descripcion, tipo, cleanUrl, req.params.id]
         );
         res.json({ message: "Contenido actualizado exitosamente" });
     } catch (error) {
