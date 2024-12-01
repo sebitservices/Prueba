@@ -1,5 +1,5 @@
 const express = require('express');
-const { checkConnection, createTables } = require('./db');
+const { pool, checkConnection } = require('./db');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -51,26 +51,7 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// Inicialización del servidor
-async function startServer() {
-    try {
-        // Verificar conexión a la base de datos
-        const isConnected = await checkConnection();
-        if (!isConnected) {
-            throw new Error('No se pudo conectar a la base de datos');
-        }
-
-        // Crear tablas
-        await createTables();
-
-        // Iniciar servidor
-        app.listen(PORT, () => {
-            console.log(`Servidor corriendo en puerto ${PORT}`);
-        });
-    } catch (error) {
-        console.error('Error al iniciar el servidor:', error);
-        process.exit(1);
-    }
-}
-
-startServer(); 
+// Iniciar servidor
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en puerto ${PORT}`);
+}); 

@@ -11,8 +11,8 @@ const pool = mysql.createPool({
     connectionLimit: 10,
     queueLimit: 0,
     ssl: {
-        // Necesario para conexiones seguras
-        rejectUnauthorized: false
+        rejectUnauthorized: false,
+        servername: 'admintechflow.com'
     }
 });
 
