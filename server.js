@@ -51,6 +51,83 @@ app.post('/login', async (req, res) => {
     }
 });
 
+// Ruta para obtener usuarios
+app.get('/usuarios', async (req, res) => {
+    try {
+        const [rows] = await pool.execute('SELECT * FROM usuarios');
+        res.json(rows);
+    } catch (error) {
+        console.error('Error al obtener usuarios:', error);
+        res.status(500).json({ error: 'Error al obtener usuarios' });
+    }
+});
+
+// Ruta para obtener productos
+app.get('/productos', async (req, res) => {
+    try {
+        const [rows] = await pool.execute('SELECT * FROM productos');
+        res.json(rows);
+    } catch (error) {
+        console.error('Error al obtener productos:', error);
+        res.status(500).json({ error: 'Error al obtener productos' });
+    }
+});
+
+// Ruta para obtener categorías
+app.get('/categorias', async (req, res) => {
+    try {
+        const [rows] = await pool.execute('SELECT * FROM categorias');
+        res.json(rows);
+    } catch (error) {
+        console.error('Error al obtener categorías:', error);
+        res.status(500).json({ error: 'Error al obtener categorías' });
+    }
+});
+
+// Ruta para obtener contenido principal
+app.get('/contenido-principal', async (req, res) => {
+    try {
+        const [rows] = await pool.execute('SELECT * FROM contenido_principal');
+        res.json(rows);
+    } catch (error) {
+        console.error('Error al obtener contenido principal:', error);
+        res.status(500).json({ error: 'Error al obtener contenido principal' });
+    }
+});
+
+// Ruta para estadísticas
+app.get('/estadisticas', async (req, res) => {
+    try {
+        // Obtener conteo de categorías
+        const [categorias] = await pool.execute('SELECT COUNT(*) as total_categorias FROM categorias');
+        
+        // Obtener productos con sus categorías
+        const [productos] = await pool.execute(`
+            SELECT 
+                p.*,
+                COALESCE(c.nombre, 'Sin categoría') as categoria_nombre 
+            FROM productos p 
+            LEFT JOIN categorias c ON p.categoria_id = c.id
+        `);
+        
+        // Obtener conteo de usuarios
+        const [usuarios] = await pool.execute('SELECT COUNT(*) as total_usuarios FROM usuarios');
+
+        const estadisticas = {
+            total_productos: productos.length,
+            total_categorias: categorias[0].total_categorias,
+            total_usuarios: usuarios[0].total_usuarios,
+            productos_recientes: productos.slice(0, 5),
+            productos_caros: [...productos].sort((a, b) => b.precio - a.precio).slice(0, 5)
+        };
+        
+        res.json(estadisticas);
+    } catch (error) {
+        console.error('Error al obtener estadísticas:', error);
+        res.status(500).json({ error: 'Error al obtener estadísticas' });
+    }
+});
+
 // Iniciar servidor
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en puerto ${PORT}`);
