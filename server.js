@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors({
     origin: [
-        'https://admintechflow.com/',
+        'https://admintechflow.com',
         'http://localhost:5500' // para desarrollo local
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
